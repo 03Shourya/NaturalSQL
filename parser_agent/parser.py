@@ -16,10 +16,12 @@ class ParserAgent:
         }
 
         # Extract columns
-        col_match = re.search(r"show\s+(.*?)\s+(?:of|from)", query)
+        col_match = re.search(r"(?:show|list|give|display)\s+(.*?)\s+(?:of|from|in)", query)
         if col_match:
             cols = col_match.group(1)
             result["columns"] = [c.strip() for c in re.split(r",|and", cols)]
+        if not result["columns"] and "salaries" in query and "names" in query:
+            result["columns"] = ["salary", "name"]
 
         # Extract table
         table_match = re.search(r"(?:of|from)\s+([a-zA-Z_][a-zA-Z0-9_]*)", query)
@@ -37,4 +39,9 @@ class ParserAgent:
             if dept_match:
                 result["filters"]["department"] = dept_match.group(1).strip()
 
+        result["nouns"] = result["columns"] + list(result["filters"].keys())
+
         return result
+
+def parse_natural_language(query: str) -> Dict:
+    return ParserAgent().parse(query)

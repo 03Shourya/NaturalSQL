@@ -1,11 +1,15 @@
 def classify_intent(parsed_data: dict) -> str:
     verbs = parsed_data.get("verbs", [])
+    if not verbs:
+        action = parsed_data.get("action")
+        if action:
+            verbs = [action]
     nouns = parsed_data.get("nouns", [])
     
     # Define rules
     verb_set = set(verb.lower() for verb in verbs)
 
-    if any(verb in verb_set for verb in ["show", "get", "list", "display", "give"]):
+    if any(verb in verb_set for verb in ["show", "get", "list", "display", "give", "select"]):
         if any(word in "total average sum count max min group".split() for word in nouns):
             return "AGGREGATE"
         return "SELECT"

@@ -6,9 +6,14 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
 
     if intent == "SELECT":
         col_clause = ", ".join(columns) if columns else "*"
+        if not columns:
+            columns = ["*"]
+        col_clause = ", ".join(columns)
         sql = f"SELECT {col_clause} FROM {table}"
     elif intent == "AGGREGATE":
         # Assume simple SUM as example
+        if not columns:
+            columns = ["*"]
         col_clause = ", ".join(columns)
         sql = f"SELECT SUM({col_clause}) FROM {table}"
     elif intent == "INSERT":
@@ -26,9 +31,16 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
             if isinstance(condition, dict):
                 for op, val in condition.items():
                     op_map = {"gt": ">", "lt": "<", "eq": "="}
-                    where_clauses.append(f"{key} {op_map.get(op, '=')} {val}")
+                    operator = op_map.get(op, "=")
+                    if isinstance(val, str):
+                        where_clauses.append(f"{key} {operator} '{val}'")
+                    else:
+                        where_clauses.append(f"{key} {operator} {val}")
             else:
-                where_clauses.append(f"{key} = '{condition}'")
+                if isinstance(condition, str):
+                    where_clauses.append(f"{key} = '{condition}'")
+                else:
+                    where_clauses.append(f"{key} = {condition}")
 
         if where_clauses:
             sql += " WHERE " + " AND ".join(where_clauses)
