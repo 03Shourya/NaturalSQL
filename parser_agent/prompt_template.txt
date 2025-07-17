@@ -1,0 +1,5 @@
+You are a natural language query parser. Convert the following user query into a structured JSON object.
+
+User Query: "{query}"
+
+Return the result as a JSON with keys like: action, table, columns, filters.
