@@ -1,230 +1,87 @@
-# NaturalSQL 🚀
+# 🚀 NaturalSQL - Natural Language to SQL Converter
 
-A Natural Language to SQL converter that transforms human-readable queries into SQL statements using a modular pipeline approach.
+Convert natural language queries into SQL statements with ease! This AI-powered tool understands complex queries and generates accurate SQL code.
 
-## Features ✨
+## 🌟 Features
 
-### Core Functionality
-- **Natural Language Processing**: Converts plain English queries to SQL
-- **Multiple SQL Operations**: Supports SELECT, INSERT, UPDATE, DELETE, and AGGREGATE operations
-- **Schema Mapping**: Intelligent mapping to database schema
-- **Filter Support**: Handles complex WHERE conditions including BETWEEN, >, <, = operators
+- **Natural Language Processing**: Convert plain English to SQL
+- **Multiple SQL Operations**: SELECT, INSERT, UPDATE, DELETE, AGGREGATE
+- **Complex Filters**: Age, city, join date, position, and salary filters
+- **Smart Schema Mapping**: Automatic field detection and normalization
+- **Beautiful Web Interface**: User-friendly Gradio interface
+- **Example Queries**: Pre-built examples to get you started
 
-### Supported Operations
-- **SELECT**: "Show all employees", "List employees in engineering department"
+## 🗄️ Database Schema
+
+### Tables:
+- **employees**: id, name, salary, department_id, city, age, join_date, position, email
+- **departments**: id, name, location, budget  
+- **projects**: id, title, budget, department_id, start_date, end_date, status
+
+## 📝 Supported Query Types
+
+### Basic Operations:
+- **SELECT**: "Show all employees", "List employees in engineering"
 - **INSERT**: "Insert a new employee named John with salary 60000"
 - **UPDATE**: "Update salary to 75000 for employees in marketing"
-- **DELETE**: "Delete employees with salary less than 30000"
-- **AGGREGATE**: "What is the average salary?", "Count the number of employees"
+- **DELETE**: "Delete employees younger than 25"
 
-### User Interfaces
-- **CLI Interface**: Interactive command-line tool with history and colorized output
-- **Gradio Web UI**: Beautiful web interface with examples and schema documentation
+### Advanced Filters:
+- **Age**: "Show employees older than 30"
+- **City**: "Show employees in New York"
+- **Join Date**: "Show employees who joined after 2020-01-01"
+- **Position**: "Show employees with position Software Engineer"
+- **Complex**: "Show employees in New York who are older than 25 and earn more than 50000"
 
-## Quick Start 🏃‍♂️
+### Aggregates:
+- **Average**: "What is the average salary?"
+- **Count**: "How many employees are there?"
+- **Sum**: "What is the total salary budget?"
 
-### Installation
-```bash
-pip install -r requirements.txt
-```
+## 🎯 Example Queries
 
-### CLI Usage
-```bash
-python cli.py
-```
+Try these examples to get started:
 
-### Web Interface
-```bash
-python gradio_app.py
-```
+1. `Show all employees`
+2. `List employees in engineering department`
+3. `What is the average salary in employees?`
+4. `Insert a new employee named John with salary 60000`
+5. `Update salary to 75000 for employees in marketing`
+6. `Show employees older than 30`
+7. `Show employees in New York`
+8. `Show employees who joined after 2020-01-01`
+9. `Show employees with position Software Engineer`
+10. `Show employees in New York who are older than 25 and earn more than 50000`
 
-### Run Tests
-```bash
-python test_pipeline.py
-```
+## 🛠️ How to Use
 
-## Architecture 🏗️
+1. **Enter your query** in natural language
+2. **Click "Generate SQL"** or press Enter
+3. **Copy the generated SQL** for your database
 
-The project follows a modular pipeline architecture:
+## 🔧 Technical Details
 
-```
-Natural Language Query
-         ↓
-   Parser Agent
-         ↓
-  Intent Classifier
-         ↓
-   Schema Mapper
-         ↓
-  Query Generator
-         ↓
-   SQL Output
-```
+This application uses:
+- **Gradio**: Web interface framework
+- **Custom NLP Pipeline**: Natural language processing
+- **Schema Mapping**: Intelligent field detection
+- **Query Generation**: SQL statement creation
 
-### Components
+## 🚀 Deployment
 
-1. **Parser Agent** (`parser_agent/parser.py`)
-   - Extracts action, table, columns, and filters
-   - Handles various natural language patterns
-   - Supports complex WHERE conditions
+This app is deployed on Hugging Face Spaces for:
+- ✅ **Public Access**: Available to everyone
+- ✅ **Permanent Hosting**: Always online
+- ✅ **GPU Availability**: Fast processing
+- ✅ **Free Hosting**: No cost to users
 
-2. **Intent Classifier** (`intent_classifier/classifier.py`)
-   - Classifies query intent (SELECT, INSERT, UPDATE, DELETE, AGGREGATE)
-   - Maps parsed actions to SQL operations
+## 📞 Support
 
-3. **Schema Mapper** (`schema_mapper/mapper.py`)
-   - Maps natural language terms to database schema
-   - Handles column normalization
-   - Validates against available tables and columns
+If you encounter any issues or have questions:
+1. Check the schema information in the sidebar
+2. Try the example queries
+3. Make sure your query follows the supported patterns
 
-4. **Query Generator** (`query_generator/generator.py`)
-   - Constructs final SQL statements
-   - Handles different SQL operations
-   - Manages WHERE clauses and conditions
+## 🎉 Enjoy!
 
-## Database Schema 📊
-
-```sql
-employees: id, name, salary, department_id
-departments: id, name
-projects: id, title, budget, department_id
-```
-
-## Example Queries 📝
-
-### SELECT Operations
-```sql
-Input: "Show all employees"
-Output: SELECT * FROM employees;
-
-Input: "List employees in engineering department"
-Output: SELECT * FROM employees WHERE department = 'engineering';
-
-Input: "Show employees who earn between 40000 and 80000"
-Output: SELECT * FROM employees WHERE salary BETWEEN 40000 AND 80000;
-```
-
-### INSERT Operations
-```sql
-Input: "Insert a new employee named John with salary 60000"
-Output: INSERT INTO employees (name, salary) VALUES ('John', 60000);
-```
-
-### UPDATE Operations
-```sql
-Input: "Update salary to 75000 for employees in marketing"
-Output: UPDATE employees SET salary = 75000 WHERE department = 'marketing';
-```
-
-### DELETE Operations
-```sql
-Input: "Delete employees with salary less than 30000"
-Output: DELETE FROM employees WHERE salary < 30000;
-```
-
-### AGGREGATE Operations
-```sql
-Input: "What is the average salary in employees?"
-Output: SELECT AVG(salary) FROM employees;
-
-Input: "Count the number of employees"
-Output: SELECT COUNT(salary) FROM employees;
-```
-
-## Recent Enhancements 🆕
-
-### 1. Enhanced CLI Interface
-- ✅ Command history with arrow key navigation
-- ✅ Colorized output using colorama
-- ✅ Help system with examples
-- ✅ Clear screen functionality
-- ✅ Error handling and graceful exit
-
-### 2. Professional Gradio Web UI
-- ✅ Modern, responsive design
-- ✅ Interactive examples
-- ✅ Schema documentation
-- ✅ Real-time SQL generation
-- ✅ Error handling and validation
-
-### 3. Comprehensive Test Suite
-- ✅ 17 test cases covering all operations
-- ✅ DELETE operation support
-- ✅ Complex WHERE conditions (BETWEEN)
-- ✅ Multiple aggregate functions (COUNT, SUM, AVG)
-- ✅ Edge cases and error handling
-
-### 4. Improved Parser
-- ✅ Better action detection
-- ✅ Enhanced filter extraction
-- ✅ Support for "between" conditions
-- ✅ Case-insensitive processing
-
-## Usage Examples 🎯
-
-### CLI Interface
-```bash
-$ python cli.py
-🚀 Welcome to NaturalSQL CLI!
-Type 'help' for usage instructions, 'exit' to quit.
-
-❯ Show all employees
-🔄 Processing...
-📝 Generated SQL:
-SELECT * FROM employees;
-
-❯ help
-NaturalSQL CLI - Natural Language to SQL Converter
-...
-```
-
-### Web Interface
-1. Run `python gradio_app.py`
-2. Open browser to `http://localhost:7860`
-3. Enter natural language queries
-4. View generated SQL instantly
-5. Try example queries from the sidebar
-
-## Dependencies 📦
-
-- `colorama>=0.4.6` - CLI colorization
-- `gradio>=4.0.0` - Web interface
-- Standard Python libraries (re, typing, unittest)
-
-## Project Structure 📁
-
-```
-NaturalSQL/
-├── agents/                    # Agent implementations
-├── intent_classifier/         # Intent classification
-├── parser_agent/             # Natural language parsing
-├── query_generator/          # SQL generation
-├── schema_mapper/            # Schema mapping
-├── cli.py                    # Command-line interface
-├── gradio_app.py             # Web interface
-├── pipeline.py               # Main pipeline
-├── test_pipeline.py          # Test suite
-└── requirements.txt          # Dependencies
-```
-
-## Contributing 🤝
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Ensure all tests pass
-5. Submit a pull request
-
-## Future Enhancements 🚀
-
-- [ ] JOIN operations support
-- [ ] GROUP BY and HAVING clauses
-- [ ] Subquery support
-- [ ] More complex aggregate functions
-- [ ] Database connection and execution
-- [ ] Query optimization suggestions
-- [ ] Multi-language support
-
-## License 📄
-
-This project is open source and available under the MIT License.
+Start converting your natural language queries to SQL today! 🎯

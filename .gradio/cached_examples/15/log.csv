@@ -1,9 +1,14 @@
 SQL Output,timestamp
-SELECT * FROM employees;,2025-07-18 09:19:34.258120
-SELECT department_id FROM employees WHERE department = 'engineering';,2025-07-18 09:19:34.260790
-SELECT AVG(salary) FROM employees;,2025-07-18 09:19:34.263106
-"INSERT INTO employees (name, salary) VALUES ('John', 60000);",2025-07-18 09:19:34.265406
-UPDATE employees SET salary = 75000 WHERE department = 'marketing';,2025-07-18 09:19:34.267672
-"SELECT name, salary, department_id FROM employees WHERE salary > 50000 AND department = 'engineering';",2025-07-18 09:19:34.269909
-SELECT name FROM employees;,2025-07-18 09:19:34.271895
-SELECT * FROM employees;,2025-07-18 09:19:34.273787
+SELECT * FROM employees;,2025-07-18 09:40:25.047419
+SELECT department_id FROM employees WHERE department = 'engineering';,2025-07-18 09:40:25.050088
+SELECT AVG(salary) FROM employees;,2025-07-18 09:40:25.052431
+"INSERT INTO employees (name, salary) VALUES ('John', 60000);",2025-07-18 09:40:25.055126
+UPDATE employees SET salary = 75000 WHERE department = 'marketing';,2025-07-18 09:40:25.057534
+"SELECT name, salary, department_id FROM employees WHERE salary > 50000 AND department = 'engineering';",2025-07-18 09:40:25.060041
+SELECT age FROM employees WHERE age > 30;,2025-07-18 09:40:25.062205
+SELECT city FROM employees WHERE city = 'New York';,2025-07-18 09:40:25.064336
+"SELECT join_date, end_date FROM employees WHERE join_date > '2020-01-01';",2025-07-18 09:40:25.066648
+"SELECT location, position FROM employees WHERE position = 'Software Engineer';",2025-07-18 09:40:25.068937
+"INSERT INTO employees (name, salary, age, city) VALUES ('Alice', 55000, 28, 'London');",2025-07-18 09:40:25.071172
+DELETE FROM employees WHERE age < 25;,2025-07-18 09:40:25.073244
+"SELECT age, city, salary FROM employees WHERE salary > 50000 AND age > 25 AND city = 'New York';",2025-07-18 09:40:25.075400
