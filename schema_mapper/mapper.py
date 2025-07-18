@@ -4,7 +4,22 @@ from schema_mapper.schema import SCHEMA
 normalization_map = {
     "the salaries": "salary",
     "names": "name",
-    "department": "department_id"
+    "department": "department_id",
+    "cities": "city",
+    "ages": "age",
+    "join date": "join_date",
+    "join dates": "join_date",
+    "joined": "join_date",
+    "positions": "position",
+    "titles": "position",
+    "emails": "email",
+    "locations": "location",
+    "budgets": "budget",
+    "start date": "start_date",
+    "start dates": "start_date",
+    "end date": "end_date",
+    "end dates": "end_date",
+    "statuses": "status"
 }
 
 def normalize(term):

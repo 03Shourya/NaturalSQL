@@ -20,7 +20,11 @@ def nl_to_sql(query: str) -> str:
     print(f"🗂️ Schema Mapping: {schema}")
 
     # Step 4: Construct SQL
-    sql = generate_sql(intent, schema["tables"], schema["columns"], parsed.get("filters", {}))
+    # Pass both filters and function information
+    filters = parsed.get("filters", {})
+    if "function" in parsed:
+        filters["function"] = parsed["function"]
+    sql = generate_sql(intent, schema["tables"], schema["columns"], filters)
     print(f"💡 Generated SQL: {sql}")
 
     return sql

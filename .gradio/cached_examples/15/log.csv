@@ -1,0 +1,9 @@
+SQL Output,timestamp
+SELECT * FROM employees;,2025-07-18 09:19:34.258120
+SELECT department_id FROM employees WHERE department = 'engineering';,2025-07-18 09:19:34.260790
+SELECT AVG(salary) FROM employees;,2025-07-18 09:19:34.263106
+"INSERT INTO employees (name, salary) VALUES ('John', 60000);",2025-07-18 09:19:34.265406
+UPDATE employees SET salary = 75000 WHERE department = 'marketing';,2025-07-18 09:19:34.267672
+"SELECT name, salary, department_id FROM employees WHERE salary > 50000 AND department = 'engineering';",2025-07-18 09:19:34.269909
+SELECT name FROM employees;,2025-07-18 09:19:34.271895
+SELECT * FROM employees;,2025-07-18 09:19:34.273787

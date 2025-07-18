@@ -8,6 +8,28 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
     display_names = {
         "department_id": "department"
     }
+    
+    # Mapping to preserve proper case for cities and other proper nouns
+    proper_case = {
+        "new york": "New York",
+        "london": "London", 
+        "tokyo": "Tokyo",
+        "paris": "Paris",
+        "berlin": "Berlin",
+        "mumbai": "Mumbai",
+        "delhi": "Delhi",
+        "bangalore": "Bangalore",
+        "software engineer": "Software Engineer",
+        "data scientist": "Data Scientist",
+        "product manager": "Product Manager",
+        "sales representative": "Sales Representative",
+        "john": "John",
+        "alice": "Alice",
+        "bob": "Bob",
+        "jane": "Jane",
+        "mike": "Mike",
+        "sarah": "Sarah"
+    }
 
     if intent == "SELECT":
         col_clause = ", ".join(columns) if columns else "*"
@@ -23,24 +45,34 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
                     continue
                 if isinstance(condition, dict):
                     for op, val in condition.items():
-                        op_map = {"gt": ">", "lt": "<", "eq": "="}
+                        op_map = {"gt": ">", "lt": "<", "eq": "=", "like": "LIKE"}
                         operator = op_map.get(op, "=")
                         display_key = display_names.get(key, key)
-                        if isinstance(val, str):
-                            where_clauses.append(f"{display_key} {operator} '{val}'")
+                        if op == "between" and isinstance(val, list) and len(val) == 2:
+                            where_clauses.append(f"{display_key} BETWEEN {val[0]} AND {val[1]}")
+                        elif op == "like" and isinstance(val, str):
+                            where_clauses.append(f"{display_key} LIKE '{val}'")
+                        elif isinstance(val, str):
+                            # Apply proper case mapping
+                            proper_val = proper_case.get(val.lower(), val)
+                            where_clauses.append(f"{display_key} {operator} '{proper_val}'")
                         else:
                             where_clauses.append(f"{display_key} {operator} {val}")
                 else:
                     display_key = display_names.get(key, key)
                     if isinstance(condition, str):
-                        where_clauses.append(f"{display_key} = '{condition}'")
+                        # Apply proper case mapping
+                        proper_val = proper_case.get(condition.lower(), condition)
+                        where_clauses.append(f"{display_key} = '{proper_val}'")
                     else:
                         where_clauses.append(f"{display_key} = {condition}")
 
             if where_clauses:
                 sql += " WHERE " + " AND ".join(where_clauses)
     elif intent == "AGGREGATE":
+        # Get the function from the filters, default to AVG
         func = filters.get("function", "AVG").upper() if filters else "AVG"
+        
         if not columns:
             columns = ["*"]
         col_clause = ", ".join([f"{func}({col})" for col in columns])
@@ -56,14 +88,18 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
                         op_map = {"gt": ">", "lt": "<", "eq": "="}
                         operator = op_map.get(op, "=")
                         display_key = display_names.get(key, key)
-                        if isinstance(val, str):
+                        if op == "between" and isinstance(val, list) and len(val) == 2:
+                            where_clauses.append(f"{display_key} BETWEEN {val[0]} AND {val[1]}")
+                        elif isinstance(val, str):
                             where_clauses.append(f"{display_key} {operator} '{val}'")
                         else:
                             where_clauses.append(f"{display_key} {operator} {val}")
                 else:
                     display_key = display_names.get(key, key)
                     if isinstance(condition, str):
-                        where_clauses.append(f"{display_key} = '{condition}'")
+                        # Apply proper case mapping
+                        proper_val = proper_case.get(condition.lower(), condition)
+                        where_clauses.append(f"{display_key} = '{proper_val}'")
                     else:
                         where_clauses.append(f"{display_key} = {condition}")
 
@@ -72,8 +108,19 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
     elif intent == "INSERT":
         if filters:
             cols = ", ".join(filters.keys())
-            vals = ", ".join([f"'{v.title()}'" if isinstance(v, str) else str(v) for v in filters.values()])
-            sql = f"INSERT INTO {table} ({cols}) VALUES ({vals})"
+            vals = []
+            for v in filters.values():
+                if isinstance(v, str):
+                    # Preserve email case, apply proper case mapping to others
+                    if '@' in v:  # Email
+                        vals.append(f"'{v}'")
+                    else:
+                        proper_val = proper_case.get(v.lower(), v)
+                        vals.append(f"'{proper_val}'")
+                else:
+                    vals.append(str(v))
+            vals_str = ", ".join(vals)
+            sql = f"INSERT INTO {table} ({cols}) VALUES ({vals_str})"
         else:
             sql = f"INSERT INTO {table} (...) VALUES (...);"
     elif intent == "UPDATE":
@@ -98,6 +145,34 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
             sql = f"UPDATE {table} SET ... WHERE ...;"
     elif intent == "DELETE":
         sql = f"DELETE FROM {table}"
+        if filters:
+            where_clauses = []
+            for key, condition in filters.items():
+                # Skip function key as it's not a filter condition
+                if key == "function":
+                    continue
+                if isinstance(condition, dict):
+                    for op, val in condition.items():
+                        op_map = {"gt": ">", "lt": "<", "eq": "="}
+                        operator = op_map.get(op, "=")
+                        display_key = display_names.get(key, key)
+                        if op == "between" and isinstance(val, list) and len(val) == 2:
+                            where_clauses.append(f"{display_key} BETWEEN {val[0]} AND {val[1]}")
+                        elif isinstance(val, str):
+                            where_clauses.append(f"{display_key} {operator} '{val}'")
+                        else:
+                            where_clauses.append(f"{display_key} {operator} {val}")
+                else:
+                    display_key = display_names.get(key, key)
+                    if isinstance(condition, str):
+                        # Apply proper case mapping
+                        proper_val = proper_case.get(condition.lower(), condition)
+                        where_clauses.append(f"{display_key} = '{proper_val}'")
+                    else:
+                        where_clauses.append(f"{display_key} = {condition}")
+
+            if where_clauses:
+                sql += " WHERE " + " AND ".join(where_clauses)
     else:
         sql = "-- Unknown intent"
 
