@@ -3,10 +3,28 @@ from schema_mapper.schema import SCHEMA
 
 normalization_map = {
     "the salaries": "salary",
-    "names": "name"
+    "names": "name",
+    "department": "department_id"
 }
 
+def normalize(term):
+    return normalization_map.get(term.lower(), term.lower())
+
 def map_to_schema(nouns: list[str], parsed_data=None) -> dict:
+    if parsed_data:
+        if "columns" in parsed_data:
+            parsed_data["columns"] = [normalize(col) for col in parsed_data["columns"]]
+        if "filters" in parsed_data:
+            parsed_data["filters"] = {
+                normalize(k): v for k, v in parsed_data["filters"].items()
+            }
+        # Filter out keys in filters that are not in schema columns
+        if "filters" in parsed_data:
+            valid_columns = set(sum(SCHEMA.values(), []))
+            parsed_data["filters"] = {
+                k: v for k, v in parsed_data["filters"].items() if k in valid_columns
+            }
+
     mapped = {"tables": set(), "columns": set()}
 
     all_tables = list(SCHEMA.keys())
