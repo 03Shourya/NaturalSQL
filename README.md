@@ -1,3 +1,14 @@
+---
+title: NaturalSQL
+emoji: 🚀
+colorFrom: blue
+colorTo: purple
+sdk: gradio
+sdk_version: "5.38.0"
+app_file: app.py
+pinned: false
+---
+
 # 🚀 NaturalSQL - Natural Language to SQL Converter
 
 Convert natural language queries into SQL statements with ease! This AI-powered tool understands complex queries and generates accurate SQL code.
