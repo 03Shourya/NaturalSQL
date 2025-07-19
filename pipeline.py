@@ -24,11 +24,14 @@ def nl_to_sql(query: str) -> str:
     filters = parsed.get("filters", {})
     if "function" in parsed:
         filters["function"] = parsed["function"]
-    sql = generate_sql(intent, schema["tables"], schema["columns"], filters)
+    
+    # Pass joins information
+    joins = parsed.get("joins", [])
+    sql = generate_sql(intent, schema["tables"], schema["columns"], filters, joins)
     print(f"💡 Generated SQL: {sql}")
 
     return sql
 
 if __name__ == "__main__":
-    sample_query = "List the salaries and names of employees in engineering who earn more than 50000"
+    sample_query = "Show employees and their departments"
     nl_to_sql(sample_query)

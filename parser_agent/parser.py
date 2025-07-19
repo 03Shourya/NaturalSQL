@@ -13,8 +13,41 @@ class ParserAgent:
             "action": "",
             "table": "",
             "columns": [],
-            "filters": {}
+            "filters": {},
+            "joins": []  # New field for JOIN operations
         }
+
+        # Detect JOIN operations first
+        join_patterns = [
+            r"employees?\s+and\s+their\s+departments?",
+            r"employees?\s+with\s+department\s+names?",
+            r"employees?\s+and\s+departments?",
+            r"show\s+employees?\s+and\s+departments?",
+            r"list\s+employees?\s+and\s+departments?",
+            r"employees?\s+with\s+their\s+department\s+info",
+            r"employees?\s+joined\s+with\s+departments?",
+            r"employees?\s+along\s+with\s+departments?",
+            r"employees?\s+including\s+department\s+details",
+            r"employees?\s+plus\s+department\s+information",
+            r"employee\s+names?\s+and\s+department\s+names?",
+            r"show\s+employee\s+names?\s+and\s+department\s+names?",
+            r"list\s+employee\s+names?\s+and\s+department\s+names?",
+            r"names?\s+and\s+departments?",
+            r"employee\s+names?\s+with\s+department\s+names?"
+        ]
+        
+        for pattern in join_patterns:
+            if re.search(pattern, query):
+                result["joins"].append({
+                    "type": "INNER",
+                    "table": "departments",
+                    "on": {
+                        "left": "employees.department_id",
+                        "right": "departments.id"
+                    }
+                })
+                print("🔗 JOIN Detected: employees INNER JOIN departments")
+                break
 
         # Detect action first
         if "insert" in query or "add" in query:

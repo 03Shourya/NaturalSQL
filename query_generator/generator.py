@@ -1,4 +1,4 @@
-def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None) -> str:
+def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None, joins: list = None) -> str:
     if not tables:
         raise ValueError("No table specified for SQL query.")
 
@@ -36,7 +36,22 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
         if not columns:
             columns = ["*"]
         col_clause = ", ".join(columns)
-        sql = f"SELECT {col_clause} FROM {table}"
+        
+        # Build the FROM clause with JOINs
+        from_clause = f"FROM {table}"
+        if joins:
+            for join in joins:
+                join_type = join.get("type", "INNER")
+                join_table = join.get("table", "")
+                join_condition = join.get("on", {})
+                if join_table and join_condition:
+                    left_col = join_condition.get("left", "")
+                    right_col = join_condition.get("right", "")
+                    if left_col and right_col:
+                        from_clause += f" {join_type} JOIN {join_table} ON {left_col} = {right_col}"
+        
+        sql = f"SELECT {col_clause} {from_clause}"
+        
         if filters:
             where_clauses = []
             for key, condition in filters.items():
@@ -183,6 +198,7 @@ if __name__ == "__main__":
     tables = ["employees"]
     columns = ["name", "salary"]
     filters = {"salary": {"gt": 50000}, "department": "engineering"}
+    joins = [{"type": "INNER", "table": "departments", "on": {"left": "employees.department_id", "right": "departments.id"}}]
 
-    query = generate_sql(intent, tables, columns, filters)
+    query = generate_sql(intent, tables, columns, filters, joins)
     print(query)

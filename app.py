@@ -11,8 +11,9 @@ except ImportError:
 
 try:
     import mysql.connector
+    mysql_connector_available = True
 except ImportError:
-    mysql.connector = None
+    mysql_connector_available = False
 
 try:
     import pymongo
@@ -64,7 +65,7 @@ def run_sql_on_postgres(host, port, user, password, dbname, sql):
         return None, str(e)
 
 def run_sql_on_mysql(host, port, user, password, dbname, sql):
-    if not mysql.connector:
+    if not mysql_connector_available:
         return None, "mysql-connector-python is not installed. Cannot connect to MySQL."
     try:
         conn = mysql.connector.connect(
@@ -167,7 +168,10 @@ examples = [
     ["Show employees with position Software Engineer"],
     ["Insert a new employee named Alice with salary 55000, age 28, from London"],
     ["Delete employees younger than 25"],
-    ["Show employees in New York who are older than 25 and earn more than 50000"]
+    ["Show employees in New York who are older than 25 and earn more than 50000"],
+    ["Show employees and their departments"],
+    ["Show employee names and department names"],
+    ["List employees with department information"]
 ]
 
 schema_info = """
@@ -184,6 +188,7 @@ schema_info = """
 - **UPDATE**: Update, modify, change
 - **DELETE**: Delete, remove
 - **AGGREGATE**: Average, sum, count, total
+- **JOIN**: Show employees and their departments, employee names and department names
 
 ### New Natural Language Patterns:
 
