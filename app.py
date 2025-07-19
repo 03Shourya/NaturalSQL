@@ -157,79 +157,36 @@ def process_query(nl_query, db_type, sqlite_file, pg_host, pg_port, pg_user, pg_
 
 examples = [
     ["Show all employees"],
-    ["List employees in engineering department"],
-    ["What is the average salary in employees?"],
-    ["Insert a new employee named John with salary 60000"],
-    ["Update salary to 75000 for employees in marketing"],
-    ["List the salaries and names of employees in engineering who earn more than 50000"],
-    ["Show employees older than 30"],
-    ["Show employees in New York"],
-    ["Show employees who joined after 2020-01-01"],
-    ["Show employees with position Software Engineer"],
-    ["Insert a new employee named Alice with salary 55000, age 28, from London"],
-    ["Delete employees younger than 25"],
-    ["Show employees in New York who are older than 25 and earn more than 50000"],
+    ["Show employees from Engineering department"],
+    ["Show employees earning more than 70000"],
     ["Show employees and their departments"],
-    ["Show employee names and department names"],
-    ["List employees with department information"],
     ["Show departments with average salary > 50000"],
-    ["Group employees by department and show count"],
-    ["Show departments with total salary > 200000"],
-    ["Show employee count by department"]
+    ["Show employees who earn more than average"],
+    ["Show departments with more than 2 employees"],
+    ["Show employees who earn less than average"],
+    ["Show departments with more than 1 employee"]
 ]
 
 schema_info = """
-## Database Schema
+## 📊 Database Schema
 
 ### Tables:
-- **employees**: id, name, salary, department_id, city, age, join_date, position, email
-- **departments**: id, name, location, budget  
-- **projects**: id, title, budget, department_id, start_date, end_date, status
+- **employees**: id, name, email, age, salary, position, city, join_date, department_id
+- **departments**: id, name, location, budget
+- **projects**: id, name, description, start_date, end_date
 
-### Supported Operations:
-- **SELECT**: Show, list, display, get
-- **INSERT**: Insert, add, create
-- **UPDATE**: Update, modify, change
-- **DELETE**: Delete, remove
-- **AGGREGATE**: Average, sum, count, total
-- **JOIN**: Show employees and their departments, employee names and department names
+### Supported Features:
+- **Basic Queries**: SELECT, INSERT, UPDATE, DELETE
+- **Filters**: WHERE conditions with operators (>, <, =, >=, <=, LIKE, BETWEEN)
+- **JOINs**: INNER JOIN between employees and departments
 - **GROUP BY**: Group employees by department, show departments with average salary
 - **HAVING**: Show departments with average salary > 50000, departments with total salary > 200000
+- **SUBQUERIES**: Show employees who earn more than average, show departments with more than 2 employees
 
 ### New Natural Language Patterns:
-
-#### Age Filters:
-- "Show employees older than 30"
-- "Show employees younger than 25"
-- "Show employees with age between 25 and 40"
-
-#### City Filters:
-- "Show employees in New York"
-- "Show employees in London"
-- "Show employees in Tokyo"
-
-#### Join Date Filters:
-- "Show employees who joined after 2020-01-01"
-- "Show employees who joined before 2019-12-31"
-- "Show employees who joined in 2021"
-
-#### Position Filters:
-- "Show employees with position Software Engineer"
-- "Show employees with title Manager"
-
-#### Complex Combinations:
-- "Show employees in New York who are older than 25 and earn more than 50000"
-- "Insert a new employee named Alice with salary 55000, age 28, from London, as Software Engineer"
-
-### Examples:
-- "Show all employees"
-- "List employees in engineering department"
-- "What is the average salary?"
-- "Insert a new employee named John with salary 60000"
-- "Update salary to 75000 for employees in marketing"
-- "Show employees older than 30"
-- "Show employees in New York"
-- "Show employees who joined after 2020-01-01"
+- "Show employees who earn more than average" → `SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)`
+- "Show departments with more than 2 employees" → `SELECT departments.* FROM departments WHERE (SELECT COUNT(*) FROM employees WHERE employees.department_id = departments.id) > 2`
+- "Show employees who earn less than average" → `SELECT * FROM employees WHERE salary < (SELECT AVG(salary) FROM employees)`
 """
 
 with gr.Blocks(

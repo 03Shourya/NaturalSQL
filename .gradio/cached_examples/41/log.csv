@@ -1,0 +1,10 @@
+SQL Output,timestamp
+"('SELECT * FROM employees;',)",2025-07-19 17:49:28.016902
+"('SELECT * FROM employees;',)",2025-07-19 17:49:28.026980
+"('SELECT salary FROM employees WHERE salary > 70000;',)",2025-07-19 17:49:28.037591
+"('SELECT * FROM employees INNER JOIN departments ON employees.department_id = departments.id;',)",2025-07-19 17:49:28.048665
+"('SELECT departments.name, AVG(employees.salary) FROM employees INNER JOIN departments ON employees.department_id = departments.id GROUP BY departments.name HAVING AVG(employees.salary) > 50000;',)",2025-07-19 17:49:28.059094
+"('SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees);',)",2025-07-19 17:49:28.069555
+"('SELECT departments.* FROM departments WHERE (SELECT COUNT(*) FROM employees WHERE employees.department_id = departments.id) > 2;',)",2025-07-19 17:49:28.081039
+"('SELECT * FROM employees WHERE salary < (SELECT AVG(salary) FROM employees);',)",2025-07-19 17:49:28.091444
+"('SELECT departments.* FROM departments WHERE (SELECT COUNT(*) FROM employees WHERE employees.department_id = departments.id) > 1;',)",2025-07-19 17:49:28.103840

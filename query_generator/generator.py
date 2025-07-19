@@ -1,4 +1,4 @@
-def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None, joins: list = None, group_by: str = None, having: dict = None) -> str:
+def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None, joins: list = None, group_by: str = None, having: dict = None, subqueries: list = None) -> str:
     if not tables:
         raise ValueError("No table specified for SQL query.")
 
@@ -52,8 +52,8 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
         
         sql = f"SELECT {col_clause} {from_clause}"
         
+        where_clauses = []
         if filters:
-            where_clauses = []
             for key, condition in filters.items():
                 # Skip function key as it's not a filter condition
                 if key == "function":
@@ -82,8 +82,33 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
                     else:
                         where_clauses.append(f"{display_key} = {condition}")
 
-            if where_clauses:
-                sql += " WHERE " + " AND ".join(where_clauses)
+        # Add subquery conditions
+        if subqueries:
+            for subquery in subqueries:
+                if subquery["type"] == "comparison" and subquery["comparison"] == "average":
+                    # Handle "more than average" or "less than average"
+                    op = ">" if subquery["operator"] == "more than" else "<"
+                    avg_subquery = f"(SELECT AVG(salary) FROM employees)"
+                    where_clauses.append(f"salary {op} {avg_subquery}")
+                elif subquery["type"] == "count":
+                    # Handle "with more than X employees"
+                    op = ">" if subquery["operator"] == "more than" else "<"
+                    count_subquery = f"(SELECT COUNT(*) FROM employees WHERE employees.department_id = departments.id)"
+                    # For count subqueries, we need to select from departments and join with employees
+                    if table == "employees":
+                        # Change the main query to select from departments
+                        sql = f"SELECT departments.* FROM departments WHERE {count_subquery} {op} {subquery['value']}"
+                    else:
+                        where_clauses.append(f"{count_subquery} {op} {subquery['value']}")
+                elif subquery["type"] == "budget":
+                    # Handle budget comparisons
+                    op = subquery["operator"]
+                    val = subquery["value"]
+                    where_clauses.append(f"budget {op} {val}")
+
+        # Add WHERE clause if we have any conditions
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
         
         # Add GROUP BY clause
         if group_by:
@@ -137,8 +162,8 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
         
         sql = f"SELECT {col_clause} {from_clause}"
         
+        where_clauses = []
         if filters:
-            where_clauses = []
             for key, condition in filters.items():
                 # Skip function key as it's not a filter condition
                 if key == "function":
@@ -163,8 +188,7 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
                     else:
                         where_clauses.append(f"{display_key} = {condition}")
 
-            if where_clauses:
-                sql += " WHERE " + " AND ".join(where_clauses)
+
         
         # Add GROUP BY clause for aggregate queries
         if group_by:
@@ -264,6 +288,7 @@ if __name__ == "__main__":
     joins = [{"type": "INNER", "table": "departments", "on": {"left": "employees.department_id", "right": "departments.id"}}]
     group_by = "department"
     having = {"column": "avg(salary)", "operator": ">", "value": 60000}
+    subqueries = [{"type": "comparison", "operator": "more than", "comparison": "average", "column": "salary"}]
 
-    query = generate_sql(intent, tables, columns, filters, joins, group_by, having)
+    query = generate_sql(intent, tables, columns, filters, joins, group_by, having, subqueries)
     print(query)

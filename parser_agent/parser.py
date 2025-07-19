@@ -16,7 +16,8 @@ class ParserAgent:
             "filters": {},
             "joins": [],  # New field for JOIN operations
             "group_by": None,  # New field for GROUP BY
-            "having": {}  # New field for HAVING conditions
+            "having": {},  # New field for HAVING conditions
+            "subqueries": []  # New field for subqueries
         }
 
         # Detect GROUP BY operations first
@@ -78,6 +79,56 @@ class ParserAgent:
                 print(f"🔍 HAVING Detected: {col} {op} {val}")
                 break
 
+        # Detect Subqueries
+        subquery_patterns = [
+            r"who\s+earn\s+more\s+than\s+average",
+            r"who\s+earn\s+less\s+than\s+average",
+            r"with\s+more\s+than\s+(\d+)\s+employees?",
+            r"with\s+less\s+than\s+(\d+)\s+employees?",
+            r"in\s+departments?\s+with\s+high\s+budgets?",
+            r"in\s+departments?\s+with\s+low\s+budgets?",
+            r"who\s+earn\s+more\s+than\s+(\w+)\s+(\w+)",
+            r"who\s+earn\s+less\s+than\s+(\w+)\s+(\w+)",
+            r"departments?\s+with\s+budget\s+(>|<|=|>=|<=)\s*(\d+)",
+            r"employees?\s+in\s+departments?\s+with\s+(\w+)\s+(>|<|=|>=|<=)\s*(\d+)",
+            r"departments?\s+with\s+more\s+than\s+(\d+)\s+employees?",
+            r"departments?\s+with\s+less\s+than\s+(\d+)\s+employees?"
+        ]
+        
+        for pattern in subquery_patterns:
+            match = re.search(pattern, query)
+            if match:
+                if "average" in pattern:
+                    result["subqueries"].append({
+                        "type": "comparison",
+                        "operator": "more than" if "more" in pattern else "less than",
+                        "comparison": "average",
+                        "column": "salary"
+                    })
+                    print(f"🔍 Subquery Detected: salary {result['subqueries'][-1]['operator']} average")
+                elif "employees" in pattern and match.groups():
+                    count = match.group(1)
+                    if count:
+                        result["subqueries"].append({
+                            "type": "count",
+                            "operator": "more than" if "more" in pattern else "less than",
+                            "value": int(count),
+                            "table": "employees"
+                        })
+                        print(f"🔍 Subquery Detected: {result['subqueries'][-1]['operator']} {count} employees")
+                elif "budget" in pattern:
+                    if match.groups():
+                        op = match.group(1)
+                        val = int(match.group(2))
+                        result["subqueries"].append({
+                            "type": "budget",
+                            "operator": op,
+                            "value": val,
+                            "column": "budget"
+                        })
+                        print(f"🔍 Subquery Detected: budget {op} {val}")
+                break
+
         # Detect JOIN operations
         join_patterns = [
             r"employees?\s+and\s+their\s+departments?",
@@ -120,6 +171,9 @@ class ParserAgent:
         elif "delete" in query or "remove" in query:
             result["action"] = "delete"
             print("🔍 Action Detected: DELETE")
+        elif result["subqueries"]:  # If subquery is detected, it's a SELECT query
+            result["action"] = "select"
+            print("🔍 Action Detected: SELECT (with subquery)")
         elif "average" in query or "avg" in query:
             result["action"] = "aggregate"
             result["function"] = "avg"

@@ -32,11 +32,14 @@ def nl_to_sql(query: str) -> str:
     group_by = parsed.get("group_by")
     having = parsed.get("having", {})
     
-    sql = generate_sql(intent, schema["tables"], schema["columns"], filters, joins, group_by, having)
+    # Pass subqueries information
+    subqueries = parsed.get("subqueries", [])
+    
+    sql = generate_sql(intent, schema["tables"], schema["columns"], filters, joins, group_by, having, subqueries)
     print(f"💡 Generated SQL: {sql}")
 
     return sql
 
 if __name__ == "__main__":
-    sample_query = "Show departments with average salary > 50000"
+    sample_query = "Show employees who earn more than average"
     nl_to_sql(sample_query)
