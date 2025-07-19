@@ -171,7 +171,11 @@ examples = [
     ["Show employees in New York who are older than 25 and earn more than 50000"],
     ["Show employees and their departments"],
     ["Show employee names and department names"],
-    ["List employees with department information"]
+    ["List employees with department information"],
+    ["Show departments with average salary > 50000"],
+    ["Group employees by department and show count"],
+    ["Show departments with total salary > 200000"],
+    ["Show employee count by department"]
 ]
 
 schema_info = """
@@ -189,6 +193,8 @@ schema_info = """
 - **DELETE**: Delete, remove
 - **AGGREGATE**: Average, sum, count, total
 - **JOIN**: Show employees and their departments, employee names and department names
+- **GROUP BY**: Group employees by department, show departments with average salary
+- **HAVING**: Show departments with average salary > 50000, departments with total salary > 200000
 
 ### New Natural Language Patterns:
 

@@ -14,10 +14,71 @@ class ParserAgent:
             "table": "",
             "columns": [],
             "filters": {},
-            "joins": []  # New field for JOIN operations
+            "joins": [],  # New field for JOIN operations
+            "group_by": None,  # New field for GROUP BY
+            "having": {}  # New field for HAVING conditions
         }
 
-        # Detect JOIN operations first
+        # Detect GROUP BY operations first
+        group_by_patterns = [
+            r"group\s+employees?\s+by\s+(\w+)",
+            r"group\s+by\s+(\w+)",
+            r"show\s+(\w+)\s+with\s+(?:average|avg|total|sum|count)\s+(\w+)",
+            r"(\w+)\s+with\s+(?:average|avg|total|sum|count)\s+(\w+)",
+            r"show\s+(\w+)\s+grouped\s+by\s+(\w+)",
+            r"(\w+)\s+grouped\s+by\s+(\w+)",
+            r"group\s+(\w+)\s+by\s+(\w+)",
+            r"show\s+(\w+)\s+and\s+their\s+(?:average|avg|total|sum|count)\s+(\w+)",
+            r"(\w+)\s+and\s+their\s+(?:average|avg|total|sum|count)\s+(\w+)",
+            r"group\s+employees?\s+by\s+(\w+)\s+and\s+show\s+count",
+            r"show\s+employee\s+count\s+by\s+(\w+)",
+            r"count\s+employees?\s+by\s+(\w+)",
+            r"(\w+)\s+count\s+by\s+(\w+)",
+            r"show\s+(\w+)\s+count\s+by\s+(\w+)"
+        ]
+        
+        for pattern in group_by_patterns:
+            match = re.search(pattern, query)
+            if match:
+                if len(match.groups()) == 2:
+                    result["group_by"] = match.group(1)
+                    # Extract the aggregation function and column
+                    agg_match = re.search(r"(average|avg|total|sum|count)\s+(\w+)", query)
+                    if agg_match:
+                        agg_func = agg_match.group(1)
+                        agg_col = agg_match.group(2)
+                        result["columns"] = [f"{agg_func}({agg_col})"]
+                        print(f"📊 GROUP BY Detected: {result['group_by']} with {agg_func}({agg_col})")
+                elif len(match.groups()) == 1:
+                    # Handle patterns like "group employees by department and show count"
+                    result["group_by"] = match.group(1)
+                    if "count" in query:
+                        result["columns"] = ["count(*)"]
+                        print(f"📊 GROUP BY Detected: {result['group_by']} with count(*)")
+                break
+
+        # Detect HAVING conditions
+        having_patterns = [
+            r"(?:average|avg|total|sum|count)\s+(\w+)\s*(>|<|=|>=|<=)\s*(\d+)",
+            r"(\w+)\s*(>|<|=|>=|<=)\s*(\d+)",
+            r"with\s+(?:average|avg|total|sum|count)\s+(\w+)\s*(>|<|=|>=|<=)\s*(\d+)"
+        ]
+        
+        for pattern in having_patterns:
+            match = re.search(pattern, query)
+            if match and result["group_by"]:  # Only if we have GROUP BY
+                col = match.group(1)
+                op = match.group(2)
+                val = int(match.group(3))
+                result["having"] = {
+                    "column": col,
+                    "operator": op,
+                    "value": val
+                }
+                print(f"🔍 HAVING Detected: {col} {op} {val}")
+                break
+
+        # Detect JOIN operations
         join_patterns = [
             r"employees?\s+and\s+their\s+departments?",
             r"employees?\s+with\s+department\s+names?",
@@ -71,50 +132,54 @@ class ParserAgent:
             result["action"] = "aggregate"
             result["function"] = "count"
             print("🔍 Action Detected: AGGREGATE (COUNT)")
+        elif result["group_by"]:  # If GROUP BY is detected, it's an aggregate query
+            result["action"] = "aggregate"
+            print("🔍 Action Detected: AGGREGATE (GROUP BY)")
         else:
             # Default to select for queries that don't match other patterns
             result["action"] = "select"
 
-        # Extract columns
-        col_match = re.search(r"(?:show|list|give|display)\s+(.*?)\s+(?:of|from|in)", query)
-        if col_match:
-            cols = col_match.group(1)
-            result["columns"] = [c.strip() for c in re.split(r",|and", cols)]
-        if not result["columns"] and "salaries" in query and "names" in query:
-            result["columns"] = ["salary", "name"]
-        
-        # Handle "List the salaries and names" pattern
-        if "list the" in query and ("salaries" in query or "names" in query):
-            cols = []
-            if "salaries" in query:
-                cols.append("salary")
-            if "names" in query:
-                cols.append("name")
-            result["columns"] = cols
-        
-        # Handle "Show employee names, cities, and ages" pattern
-        if "employee" in query and ("names" in query or "cities" in query or "ages" in query):
-            cols = []
-            if "names" in query:
-                cols.append("name")
-            if "cities" in query:
-                cols.append("city")
-            if "ages" in query:
-                cols.append("age")
-            if cols:
+        # Extract columns (only if not already set by GROUP BY)
+        if not result["columns"]:
+            col_match = re.search(r"(?:show|list|give|display)\s+(.*?)\s+(?:of|from|in)", query)
+            if col_match:
+                cols = col_match.group(1)
+                result["columns"] = [c.strip() for c in re.split(r",|and", cols)]
+            if not result["columns"] and "salaries" in query and "names" in query:
+                result["columns"] = ["salary", "name"]
+            
+            # Handle "List the salaries and names" pattern
+            if "list the" in query and ("salaries" in query or "names" in query):
+                cols = []
+                if "salaries" in query:
+                    cols.append("salary")
+                if "names" in query:
+                    cols.append("name")
                 result["columns"] = cols
-        
-        # Handle more column patterns
-        if "cities" in query:
-            result["columns"].append("city")
-        if "ages" in query:
-            result["columns"].append("age")
-        if "positions" in query or "titles" in query:
-            result["columns"].append("position")
-        if "emails" in query:
-            result["columns"].append("email")
-        if "join dates" in query or "joined" in query:
-            result["columns"].append("join_date")
+            
+            # Handle "Show employee names, cities, and ages" pattern
+            if "employee" in query and ("names" in query or "cities" in query or "ages" in query):
+                cols = []
+                if "names" in query:
+                    cols.append("name")
+                if "cities" in query:
+                    cols.append("city")
+                if "ages" in query:
+                    cols.append("age")
+                if cols:
+                    result["columns"] = cols
+            
+            # Handle more column patterns
+            if "cities" in query:
+                result["columns"].append("city")
+            if "ages" in query:
+                result["columns"].append("age")
+            if "positions" in query or "titles" in query:
+                result["columns"].append("position")
+            if "emails" in query:
+                result["columns"].append("email")
+            if "join dates" in query or "joined" in query:
+                result["columns"].append("join_date")
 
         # Extract table
         table_match = re.search(r"(?:of|from|in)\s+([a-zA-Z_][a-zA-Z0-9_]*)", query)

@@ -1,4 +1,4 @@
-def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None, joins: list = None) -> str:
+def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None, joins: list = None, group_by: str = None, having: dict = None) -> str:
     if not tables:
         raise ValueError("No table specified for SQL query.")
 
@@ -84,14 +84,59 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
 
             if where_clauses:
                 sql += " WHERE " + " AND ".join(where_clauses)
+        
+        # Add GROUP BY clause
+        if group_by:
+            sql += f" GROUP BY {group_by}"
+        
+        # Add HAVING clause
+        if having and group_by:
+            having_col = having.get("column", "")
+            having_op = having.get("operator", ">")
+            having_val = having.get("value", 0)
+            sql += f" HAVING {having_col} {having_op} {having_val}"
+            
     elif intent == "AGGREGATE":
         # Get the function from the filters, default to AVG
         func = filters.get("function", "AVG").upper() if filters else "AVG"
         
-        if not columns:
-            columns = ["*"]
-        col_clause = ", ".join([f"{func}({col})" for col in columns])
-        sql = f"SELECT {col_clause} FROM {table}"
+        # Build the FROM clause with JOINs
+        from_clause = f"FROM {table}"
+        if joins:
+            for join in joins:
+                join_type = join.get("type", "INNER")
+                join_table = join.get("table", "")
+                join_condition = join.get("on", {})
+                if join_table and join_condition:
+                    left_col = join_condition.get("left", "")
+                    right_col = join_condition.get("right", "")
+                    if left_col and right_col:
+                        from_clause += f" {join_type} JOIN {join_table} ON {left_col} = {right_col}"
+        
+        # Handle GROUP BY queries
+        if group_by:
+            # For GROUP BY, we need to include both the group column and the aggregation
+            if group_by == "departments" or group_by == "department":
+                # Join with departments table to get department names
+                from_clause += " INNER JOIN departments ON employees.department_id = departments.id"
+                if "count(*)" in columns:
+                    select_cols = ["departments.name", "COUNT(*)"]
+                else:
+                    select_cols = ["departments.name", f"{func}(employees.salary)"]
+            else:
+                if "count(*)" in columns:
+                    select_cols = [group_by, "COUNT(*)"]
+                else:
+                    select_cols = [group_by, f"{func}(salary)"]
+            col_clause = ", ".join(select_cols)
+        else:
+            # Regular aggregate query
+            if not columns:
+                columns = ["*"]
+            col_clause = ", ".join([f"{func}({col})" for col in columns])
+        
+        sql = f"SELECT {col_clause} {from_clause}"
+        
         if filters:
             where_clauses = []
             for key, condition in filters.items():
@@ -120,6 +165,24 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
 
             if where_clauses:
                 sql += " WHERE " + " AND ".join(where_clauses)
+        
+        # Add GROUP BY clause for aggregate queries
+        if group_by:
+            if group_by == "departments" or group_by == "department":
+                sql += " GROUP BY departments.name"
+            else:
+                sql += f" GROUP BY {group_by}"
+        
+        # Add HAVING clause
+        if having and group_by:
+            having_col = having.get("column", "")
+            having_op = having.get("operator", ">")
+            having_val = having.get("value", 0)
+            # For HAVING, we need to reference the aggregated column
+            if having_col == "salary":
+                having_col = f"{func}(employees.salary)"
+            sql += f" HAVING {having_col} {having_op} {having_val}"
+            
     elif intent == "INSERT":
         if filters:
             cols = ", ".join(filters.keys())
@@ -199,6 +262,8 @@ if __name__ == "__main__":
     columns = ["name", "salary"]
     filters = {"salary": {"gt": 50000}, "department": "engineering"}
     joins = [{"type": "INNER", "table": "departments", "on": {"left": "employees.department_id", "right": "departments.id"}}]
+    group_by = "department"
+    having = {"column": "avg(salary)", "operator": ">", "value": 60000}
 
-    query = generate_sql(intent, tables, columns, filters, joins)
+    query = generate_sql(intent, tables, columns, filters, joins, group_by, having)
     print(query)
