@@ -17,7 +17,10 @@ class ParserAgent:
             "joins": [],  # New field for JOIN operations
             "group_by": None,  # New field for GROUP BY
             "having": {},  # New field for HAVING conditions
-            "subqueries": []  # New field for subqueries
+            "subqueries": [],  # New field for subqueries
+            "window_functions": [],  # New field for window functions
+            "ctes": [],  # New field for CTEs
+            "advanced_aggregations": []  # New field for advanced aggregations
         }
 
         # Detect GROUP BY operations first
@@ -127,6 +130,205 @@ class ParserAgent:
                             "column": "budget"
                         })
                         print(f"🔍 Subquery Detected: budget {op} {val}")
+                break
+
+        # Detect Window Functions
+        window_patterns = [
+            r"show\s+employees?\s+with\s+row\s+numbers?",
+            r"show\s+row\s+numbers?",
+            r"add\s+row\s+numbers?",
+            r"list\s+employees?\s+with\s+row\s+numbers?",
+            r"with\s+row\s+numbers?",
+            r"dense\s+rank\s+by\s+(\w+)",
+            r"rank\s+employees?\s+by\s+salary\s+desc",
+            r"rank\s+employees?\s+by\s+salary\s+asc",
+            r"rank\s+employees?\s+by\s+(\w+)",
+            r"rank\s+by\s+(\w+)",
+            r"show\s+employees?\s+with\s+rank",
+            r"top\s+(\d+)\s+employees?\s+by\s+(\w+)",
+            r"bottom\s+(\d+)\s+employees?\s+by\s+(\w+)",
+            r"rank\s+departments?\s+by\s+(\w+)",
+            r"show\s+ranked\s+(\w+)",
+            r"employees?\s+ranked\s+by\s+(\w+)",
+            r"with\s+rank"
+        ]
+        
+        for pattern in window_patterns:
+            match = re.search(pattern, query)
+            if match:
+                print(f"🔍 Window pattern matched: {pattern}")
+                if r"row\s+numbers?" in pattern:
+                    result["window_functions"].append({
+                        "type": "row_number",
+                        "order_by": "id",
+                        "order": "ASC"
+                    })
+                    print(f"🔍 Window Function Detected: ROW_NUMBER()")
+                    break
+                elif "rank" in pattern and "dense" not in pattern and match.groups():
+                    column = match.group(1)
+                    order = "DESC" if "desc" in pattern else "ASC"
+                    result["window_functions"].append({
+                        "type": "rank",
+                        "order_by": column,
+                        "order": order
+                    })
+                    print(f"🔍 Window Function Detected: RANK() by {column} {order}")
+                elif r"dense\s+rank" in pattern and match.groups():
+                    column = match.group(1)
+                    result["window_functions"].append({
+                        "type": "dense_rank",
+                        "order_by": column,
+                        "order": "DESC"
+                    })
+                    print(f"🔍 Window Function Detected: DENSE_RANK() by {column}")
+                    break
+                elif "top" in pattern and match.groups():
+                    limit = int(match.group(1))
+                    column = match.group(2)
+                    result["window_functions"].append({
+                        "type": "rank",
+                        "order_by": column,
+                        "order": "DESC",
+                        "limit": limit
+                    })
+                    print(f"🔍 Window Function Detected: TOP {limit} by {column}")
+                elif "bottom" in pattern and match.groups():
+                    limit = int(match.group(1))
+                    column = match.group(2)
+                    result["window_functions"].append({
+                        "type": "rank",
+                        "order_by": column,
+                        "order": "ASC",
+                        "limit": limit
+                    })
+                    print(f"🔍 Window Function Detected: BOTTOM {limit} by {column}")
+                break
+
+        # Detect CTEs (Common Table Expressions)
+        cte_patterns = [
+            r"with\s+(\w+)\s+as\s+\((.+?)\)",
+            r"using\s+cte",
+            r"common\s+table\s+expression",
+            r"with\s+recursive",
+            r"with\s+(\w+)\s+as",
+            r"define\s+(\w+)\s+as",
+            r"create\s+(\w+)\s+as",
+            r"high\s+salary\s+employees?",
+            r"senior\s+employees?",
+            r"junior\s+employees?",
+            r"department\s+summary",
+            r"employee\s+summary"
+        ]
+        
+        for pattern in cte_patterns:
+            match = re.search(pattern, query)
+            if match:
+                print(f"🔍 CTE pattern matched: {pattern}")
+                if "with" in pattern and "as" in pattern and match.groups():
+                    cte_name = match.group(1)
+                    cte_query = match.group(2) if len(match.groups()) > 1 else ""
+                    result["ctes"].append({
+                        "name": cte_name,
+                        "query": cte_query,
+                        "type": "with_clause"
+                    })
+                    print(f"🔍 CTE Detected: {cte_name}")
+                elif r"high\s+salary" in pattern:
+                    result["ctes"].append({
+                        "name": "high_salary_employees",
+                        "query": "SELECT * FROM employees WHERE salary > 70000",
+                        "type": "high_salary"
+                    })
+                    print(f"🔍 CTE Detected: high_salary_employees")
+                elif "senior" in pattern:
+                    result["ctes"].append({
+                        "name": "senior_employees",
+                        "query": "SELECT * FROM employees WHERE age > 30",
+                        "type": "senior"
+                    })
+                    print(f"🔍 CTE Detected: senior_employees")
+                elif "junior" in pattern:
+                    result["ctes"].append({
+                        "name": "junior_employees",
+                        "query": "SELECT * FROM employees WHERE age <= 30",
+                        "type": "junior"
+                    })
+                    print(f"🔍 CTE Detected: junior_employees")
+                elif r"department\s+summary" in pattern:
+                    result["ctes"].append({
+                        "name": "department_summary",
+                        "query": "SELECT department_id, COUNT(*) as emp_count, AVG(salary) as avg_salary FROM employees GROUP BY department_id",
+                        "type": "department_summary"
+                    })
+                    print(f"🔍 CTE Detected: department_summary")
+                break
+
+        # Detect Advanced Aggregations (ROLLUP, CUBE)
+        advanced_agg_patterns = [
+            r"with\s+rollup",
+            r"with\s+cube",
+            r"hierarchical\s+summary",
+            r"multi\s+level\s+summary",
+            r"department\s+and\s+position\s+summary",
+            r"rollup\s+by\s+(\w+)",
+            r"cube\s+by\s+(\w+)",
+            r"grouping\s+sets",
+            r"hierarchical\s+grouping",
+            r"multi\s+dimensional\s+analysis",
+            r"department\s+position\s+rollup",
+            r"salary\s+rollup\s+by\s+department"
+        ]
+        
+        for pattern in advanced_agg_patterns:
+            match = re.search(pattern, query)
+            if match:
+                if "rollup" in pattern:
+                    if match.groups():
+                        column = match.group(1)
+                        result["advanced_aggregations"].append({
+                            "type": "rollup",
+                            "columns": [column],
+                            "operation": "ROLLUP"
+                        })
+                        print(f"🔍 Advanced Aggregation Detected: ROLLUP by {column}")
+                    else:
+                        result["advanced_aggregations"].append({
+                            "type": "rollup",
+                            "columns": ["department_id", "position"],
+                            "operation": "ROLLUP"
+                        })
+                        print(f"🔍 Advanced Aggregation Detected: ROLLUP")
+                elif "cube" in pattern:
+                    if match.groups():
+                        column = match.group(1)
+                        result["advanced_aggregations"].append({
+                            "type": "cube",
+                            "columns": [column],
+                            "operation": "CUBE"
+                        })
+                        print(f"🔍 Advanced Aggregation Detected: CUBE by {column}")
+                    else:
+                        result["advanced_aggregations"].append({
+                            "type": "cube",
+                            "columns": ["department_id", "position"],
+                            "operation": "CUBE"
+                        })
+                        print(f"🔍 Advanced Aggregation Detected: CUBE")
+                elif "hierarchical" in pattern:
+                    result["advanced_aggregations"].append({
+                        "type": "rollup",
+                        "columns": ["department_id", "position"],
+                        "operation": "ROLLUP"
+                    })
+                    print(f"🔍 Advanced Aggregation Detected: Hierarchical ROLLUP")
+                elif "multi" in pattern and "dimensional" in pattern:
+                    result["advanced_aggregations"].append({
+                        "type": "cube",
+                        "columns": ["department_id", "position", "city"],
+                        "operation": "CUBE"
+                    })
+                    print(f"🔍 Advanced Aggregation Detected: Multi-dimensional CUBE")
                 break
 
         # Detect JOIN operations

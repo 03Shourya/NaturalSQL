@@ -164,7 +164,15 @@ examples = [
     ["Show employees who earn more than average"],
     ["Show departments with more than 2 employees"],
     ["Show employees who earn less than average"],
-    ["Show departments with more than 1 employee"]
+    ["Show departments with more than 1 employee"],
+    ["Rank employees by salary"],
+    ["Show employees with row numbers"],
+    ["Top 3 employees by salary"],
+    ["Show high salary employees"],
+    ["Show senior employees"],
+    ["Show employees with rollup"],
+    ["Show employees with cube"],
+    ["Show hierarchical summary"]
 ]
 
 schema_info = """
@@ -182,11 +190,15 @@ schema_info = """
 - **GROUP BY**: Group employees by department, show departments with average salary
 - **HAVING**: Show departments with average salary > 50000, departments with total salary > 200000
 - **SUBQUERIES**: Show employees who earn more than average, show departments with more than 2 employees
+- **WINDOW FUNCTIONS**: Rank employees by salary, show row numbers, top N employees
+- **CTEs**: High salary employees, senior employees, department summary
+- **ADVANCED AGGREGATIONS**: ROLLUP, CUBE for hierarchical analysis
 
-### New Natural Language Patterns:
-- "Show employees who earn more than average" → `SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)`
-- "Show departments with more than 2 employees" → `SELECT departments.* FROM departments WHERE (SELECT COUNT(*) FROM employees WHERE employees.department_id = departments.id) > 2`
-- "Show employees who earn less than average" → `SELECT * FROM employees WHERE salary < (SELECT AVG(salary) FROM employees)`
+### Advanced Natural Language Patterns:
+- **Subqueries**: "Show employees who earn more than average" → `SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)`
+- **Window Functions**: "Rank employees by salary" → `SELECT *, RANK() OVER (ORDER BY salary ASC) as rank_num FROM employees`
+- **CTEs**: "Show high salary employees" → `WITH high_salary_employees AS (SELECT * FROM employees WHERE salary > 70000) SELECT * FROM employees`
+- **Advanced Aggregations**: "Show employees with rollup" → `SELECT * FROM employees GROUP BY ROLLUP(department_id, position)`
 """
 
 with gr.Blocks(

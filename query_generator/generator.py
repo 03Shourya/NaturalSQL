@@ -1,8 +1,27 @@
-def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None, joins: list = None, group_by: str = None, having: dict = None, subqueries: list = None) -> str:
+def generate_sql(intent: str, tables: list[str], columns: list[str], filters: dict = None, joins: list = None, group_by: str = None, having: dict = None, subqueries: list = None, window_functions: list = None, ctes: list = None, advanced_aggregations: list = None) -> str:
     if not tables:
         raise ValueError("No table specified for SQL query.")
-
-    table = tables[0]  # For now, pick the first matched table
+    
+    # Generate CTEs if present
+    cte_clause = ""
+    if ctes:
+        cte_definitions = []
+        for cte in ctes:
+            if cte["type"] == "with_clause" and cte["query"]:
+                cte_definitions.append(f"{cte['name']} AS ({cte['query']})")
+            elif cte["type"] == "high_salary":
+                cte_definitions.append(f"{cte['name']} AS (SELECT * FROM employees WHERE salary > 70000)")
+            elif cte["type"] == "senior":
+                cte_definitions.append(f"{cte['name']} AS (SELECT * FROM employees WHERE age > 30)")
+            elif cte["type"] == "junior":
+                cte_definitions.append(f"{cte['name']} AS (SELECT * FROM employees WHERE age <= 30)")
+            elif cte["type"] == "department_summary":
+                cte_definitions.append(f"{cte['name']} AS (SELECT department_id, COUNT(*) as emp_count, AVG(salary) as avg_salary FROM employees GROUP BY department_id)")
+        if cte_definitions:
+            cte_clause = "WITH " + ", ".join(cte_definitions) + " "
+    
+    # Build the main query
+    table = tables[0] if tables else "employees"
     
     # Mapping from schema column names to display names
     display_names = {
@@ -32,9 +51,20 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
     }
 
     if intent == "SELECT":
-        col_clause = ", ".join(columns) if columns else "*"
+        # Build column clause
         if not columns:
             columns = ["*"]
+        
+        # Add window functions to columns if present
+        if window_functions:
+            for window_func in window_functions:
+                if window_func["type"] == "row_number":
+                    columns.append(f"ROW_NUMBER() OVER (ORDER BY {window_func['order_by']} {window_func['order']}) as row_num")
+                elif window_func["type"] == "rank":
+                    columns.append(f"RANK() OVER (ORDER BY {window_func['order_by']} {window_func['order']}) as rank_num")
+                elif window_func["type"] == "dense_rank":
+                    columns.append(f"DENSE_RANK() OVER (ORDER BY {window_func['order_by']} {window_func['order']}) as dense_rank_num")
+        
         col_clause = ", ".join(columns)
         
         # Build the FROM clause with JOINs
@@ -50,7 +80,7 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
                     if left_col and right_col:
                         from_clause += f" {join_type} JOIN {join_table} ON {left_col} = {right_col}"
         
-        sql = f"SELECT {col_clause} {from_clause}"
+        sql = f"{cte_clause}SELECT {col_clause} {from_clause}"
         
         where_clauses = []
         if filters:
@@ -110,9 +140,34 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
         if where_clauses:
             sql += " WHERE " + " AND ".join(where_clauses)
         
+        # Add ORDER BY for window functions
+        if window_functions:
+            for window_func in window_functions:
+                if "order_by" in window_func:
+                    sql += f" ORDER BY {window_func['order_by']} {window_func['order']}"
+                    break
+        
+        # Add LIMIT for TOP/BOTTOM queries
+        if window_functions:
+            for window_func in window_functions:
+                if "limit" in window_func:
+                    sql += f" LIMIT {window_func['limit']}"
+                    break
+        
         # Add GROUP BY clause
         if group_by:
             sql += f" GROUP BY {group_by}"
+        elif advanced_aggregations:
+            for agg in advanced_aggregations:
+                if agg["type"] == "rollup":
+                    columns_str = ", ".join(agg["columns"])
+                    sql += f" GROUP BY ROLLUP({columns_str})"
+                    print(f"🔍 Advanced Aggregation: ROLLUP({columns_str})")
+                elif agg["type"] == "cube":
+                    columns_str = ", ".join(agg["columns"])
+                    sql += f" GROUP BY CUBE({columns_str})"
+                    print(f"🔍 Advanced Aggregation: CUBE({columns_str})")
+                break
         
         # Add HAVING clause
         if having and group_by:
@@ -160,7 +215,7 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
                 columns = ["*"]
             col_clause = ", ".join([f"{func}({col})" for col in columns])
         
-        sql = f"SELECT {col_clause} {from_clause}"
+        sql = f"{cte_clause}SELECT {col_clause} {from_clause}"
         
         where_clauses = []
         if filters:
@@ -196,6 +251,17 @@ def generate_sql(intent: str, tables: list[str], columns: list[str], filters: di
                 sql += " GROUP BY departments.name"
             else:
                 sql += f" GROUP BY {group_by}"
+        elif advanced_aggregations:
+            for agg in advanced_aggregations:
+                if agg["type"] == "rollup":
+                    columns_str = ", ".join(agg["columns"])
+                    sql += f" GROUP BY ROLLUP({columns_str})"
+                    print(f"🔍 Advanced Aggregation: ROLLUP({columns_str})")
+                elif agg["type"] == "cube":
+                    columns_str = ", ".join(agg["columns"])
+                    sql += f" GROUP BY CUBE({columns_str})"
+                    print(f"🔍 Advanced Aggregation: CUBE({columns_str})")
+                break
         
         # Add HAVING clause
         if having and group_by:

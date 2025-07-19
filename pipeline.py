@@ -35,11 +35,20 @@ def nl_to_sql(query: str) -> str:
     # Pass subqueries information
     subqueries = parsed.get("subqueries", [])
     
-    sql = generate_sql(intent, schema["tables"], schema["columns"], filters, joins, group_by, having, subqueries)
+    # Pass window functions information
+    window_functions = parsed.get("window_functions", [])
+    
+    # Pass CTEs information
+    ctes = parsed.get("ctes", [])
+    
+    # Pass advanced aggregations information
+    advanced_aggregations = parsed.get("advanced_aggregations", [])
+    
+    sql = generate_sql(intent, schema["tables"], schema["columns"], filters, joins, group_by, having, subqueries, window_functions, ctes, advanced_aggregations)
     print(f"💡 Generated SQL: {sql}")
 
     return sql
 
 if __name__ == "__main__":
-    sample_query = "Show employees who earn more than average"
+    sample_query = "Show employees with rollup"
     nl_to_sql(sample_query)
