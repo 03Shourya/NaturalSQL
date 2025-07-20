@@ -1,0 +1,40 @@
+{
+  "database": {
+    "sqlite": {
+      "path": "mydb.db"
+    },
+    "postgresql": {
+      "host": "localhost",
+      "port": 5432,
+      "database": "naturalsql",
+      "user": "postgres",
+      "password": ""
+    },
+    "mysql": {
+      "host": "localhost",
+      "port": 3306,
+      "database": "naturalsql",
+      "user": "root",
+      "password": ""
+    },
+    "mongodb": {
+      "uri": "mongodb://localhost:27017/",
+      "database": "naturalsql"
+    }
+  },
+  "features": {
+    "subqueries": true,
+    "window_functions": true,
+    "ctes": true,
+    "advanced_aggregations": true,
+    "joins": true,
+    "group_by": true,
+    "having": true
+  },
+  "ui": {
+    "theme": "default",
+    "examples": true,
+    "history": true,
+    "export": true
+  }
+}

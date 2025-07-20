@@ -1,0 +1,18 @@
+SQL Output,timestamp
+"('SELECT * FROM employees;',)",2025-07-20 19:01:31.362172
+"('SELECT * FROM employees;',)",2025-07-20 19:01:31.373874
+"('SELECT salary FROM employees WHERE salary > 70000;',)",2025-07-20 19:01:31.384364
+"('SELECT * FROM employees INNER JOIN departments ON employees.department_id = departments.id;',)",2025-07-20 19:01:31.396683
+"('SELECT departments.name, AVG(employees.salary) FROM employees INNER JOIN departments ON employees.department_id = departments.id GROUP BY departments.name HAVING AVG(employees.salary) > 50000;',)",2025-07-20 19:01:31.408231
+"('SELECT * FROM employees WHERE salary > (SELECT AVG(salary) FROM employees);',)",2025-07-20 19:01:31.418466
+"('SELECT departments.* FROM departments WHERE (SELECT COUNT(*) FROM employees WHERE employees.department_id = departments.id) > 2;',)",2025-07-20 19:01:31.428109
+"('SELECT * FROM employees WHERE salary < (SELECT AVG(salary) FROM employees);',)",2025-07-20 19:01:31.437752
+"('SELECT departments.* FROM departments WHERE (SELECT COUNT(*) FROM employees WHERE employees.department_id = departments.id) > 1;',)",2025-07-20 19:01:31.447627
+"('SELECT *, RANK() OVER (ORDER BY salary ASC) as rank_num FROM employees ORDER BY salary ASC;',)",2025-07-20 19:01:31.458866
+"('SELECT *, ROW_NUMBER() OVER (ORDER BY id ASC) as row_num FROM employees ORDER BY id ASC;',)",2025-07-20 19:01:31.468601
+"('SELECT *, RANK() OVER (ORDER BY salary DESC) as rank_num FROM employees ORDER BY salary DESC LIMIT 3;',)",2025-07-20 19:01:31.477894
+"('WITH high_salary_employees AS (SELECT * FROM employees WHERE salary > 70000) SELECT * FROM employees;',)",2025-07-20 19:01:31.487316
+"('WITH senior_employees AS (SELECT * FROM employees WHERE age > 30) SELECT * FROM employees;',)",2025-07-20 19:01:31.496924
+"('SELECT * FROM employees GROUP BY ROLLUP(department_id, position);',)",2025-07-20 19:01:31.506274
+"('SELECT * FROM employees GROUP BY CUBE(department_id, position);',)",2025-07-20 19:01:31.515475
+"('SELECT SUM(salary) FROM employees GROUP BY ROLLUP(department_id, position);',)",2025-07-20 19:01:31.524853
