@@ -265,6 +265,8 @@ with gr.Blocks(
         font-size: 1.2em;
         margin-bottom: 30px;
         margin-top: 0;
+        color: #111 !important;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.15), 0 0px 2px #fff;
     }
     
     .icon-container {
@@ -279,7 +281,8 @@ with gr.Blocks(
     .project-icon {
         width: 80px;
         height: 80px;
-        filter: drop-shadow(0 0 10px currentColor);
+        color: #111 !important;
+        filter: drop-shadow(0 0 10px #111) drop-shadow(0 0 20px #fff8) drop-shadow(0 0 30px #1118);
         animation: iconGlow 2s ease-in-out infinite alternate;
     }
     
@@ -358,8 +361,9 @@ with gr.Blocks(
     .light .footer-note {
         text-align: center;
         margin-top: 40px;
-        color: #60a5fa;
+        color: #111 !important;
         font-size: 0.9em;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.15), 0 0px 2px #fff;
     }
     
     /* Enhanced 3D effects for light mode */
@@ -459,6 +463,18 @@ with gr.Blocks(
     /* Ensure text is always visible */
     .gr-text, .gr-label, .gr-markdown {
         color: inherit !important;
+    }
+    .footer-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+    .footer-note {
+        text-align: center;
+        margin-top: 40px;
+        color: #ccc;
+        font-size: 0.9em;
     }
     """
 ) as demo:
@@ -573,7 +589,11 @@ with gr.Blocks(
         interactive=False
     )
 
-    gr.HTML("<div class='footer-note'>Built with ❤️ by Shourya Sharma</div>")
+    gr.HTML("""
+<div class='footer-row'>
+    <div class='footer-note'>Built with ❤️ by Shourya Sharma</div>
+</div>
+""")
 
     submit_btn.click(
         fn=process_query,
